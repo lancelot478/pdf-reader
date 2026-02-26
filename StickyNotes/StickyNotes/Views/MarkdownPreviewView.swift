@@ -4,14 +4,14 @@ struct MarkdownPreviewView: View {
     let content: String
 
     var body: some View {
-        let _ = print("[Preview] body evaluated, content length=\(content.count)")
         ScrollView {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 ForEach(Array(parseBlocks().enumerated()), id: \.offset) { _, block in
                     renderBlock(block)
                 }
             }
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .textSelection(.enabled)
         }
@@ -23,81 +23,130 @@ struct MarkdownPreviewView: View {
     private func renderBlock(_ block: Block) -> some View {
         switch block {
         case .heading(let level, let text):
-            Text(inlineMarkdown(text))
-                .font(headingFont(level))
-                .fontWeight(level <= 2 ? .bold : .semibold)
-                .padding(.top, level <= 2 ? 8 : 4)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(inlineMarkdown(text))
+                    .font(headingFont(level))
+                    .fontWeight(level <= 2 ? .bold : .semibold)
+
+                if level <= 2 {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.accentColor.opacity(0.4), .clear],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(height: 1)
+                }
+            }
+            .padding(.top, level <= 2 ? 10 : 6)
 
         case .paragraph(let text):
             Text(inlineMarkdown(text))
                 .font(.body)
+                .lineSpacing(3)
 
         case .codeBlock(_, let code):
             Text(code)
-                .font(.system(.callout, design: .monospaced))
-                .padding(12)
+                .font(.system(size: 12, design: .monospaced))
+                .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.quaternary.opacity(0.5))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(.quaternary, lineWidth: 0.5)
+                )
 
         case .unorderedList(let items):
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 5) {
                 ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text("•").foregroundStyle(.secondary)
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Circle()
+                            .fill(Color.accentColor.opacity(0.7))
+                            .frame(width: 5, height: 5)
+                            .offset(y: 1)
                         Text(inlineMarkdown(item))
+                            .lineSpacing(2)
                     }
                 }
             }
-            .padding(.leading, 4)
+            .padding(.leading, 6)
 
         case .orderedList(let items):
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 5) {
                 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text("\(index + 1).")
-                            .foregroundStyle(.secondary)
+                            .foregroundColor(Color.accentColor.opacity(0.8))
                             .monospacedDigit()
+                            .font(.system(size: 12, weight: .semibold))
                         Text(inlineMarkdown(item))
+                            .lineSpacing(2)
                     }
                 }
             }
-            .padding(.leading, 4)
+            .padding(.leading, 6)
 
         case .blockquote(let text):
             HStack(alignment: .top, spacing: 0) {
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(.secondary.opacity(0.4))
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.accentColor.opacity(0.6), Color.accentColor.opacity(0.2)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
                     .frame(width: 3)
+
                 Text(inlineMarkdown(text))
                     .foregroundStyle(.secondary)
-                    .padding(.leading, 12)
+                    .font(.system(size: 13))
+                    .italic()
+                    .lineSpacing(2)
+                    .padding(.leading, 14)
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, 4)
+            .padding(.horizontal, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(.quaternary.opacity(0.3))
+            )
 
         case .horizontalRule:
-            Divider().padding(.vertical, 4)
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [.clear, .secondary.opacity(0.3), .clear],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(height: 1)
+                .padding(.vertical, 8)
         }
     }
 
     private func headingFont(_ level: Int) -> Font {
         switch level {
-        case 1: return .title
-        case 2: return .title2
-        case 3: return .title3
-        case 4: return .headline
-        default: return .subheadline
+        case 1: return .system(size: 24, weight: .bold)
+        case 2: return .system(size: 20, weight: .bold)
+        case 3: return .system(size: 17, weight: .semibold)
+        case 4: return .system(size: 15, weight: .semibold)
+        default: return .system(size: 14, weight: .medium)
         }
     }
 
     private func inlineMarkdown(_ text: String) -> AttributedString {
-        print("[Preview] inlineMarkdown called, text='\(text.prefix(30))'")
         var options = AttributedString.MarkdownParsingOptions()
         options.interpretedSyntax = .inlineOnlyPreservingWhitespace
-        let result = (try? AttributedString(markdown: text, options: options))
+        return (try? AttributedString(markdown: text, options: options))
             ?? AttributedString(text)
-        print("[Preview] inlineMarkdown done")
-        return result
     }
 
     // MARK: - Block types
@@ -115,8 +164,7 @@ struct MarkdownPreviewView: View {
     // MARK: - Parser
 
     private func parseBlocks() -> [Block] {
-        print("[Preview] parseBlocks start, content='\(content.prefix(50))'")
-        guard !content.isEmpty else { print("[Preview] content empty"); return [] }
+        guard !content.isEmpty else { return [] }
 
         let lines = content.components(separatedBy: "\n")
         var blocks: [Block] = []
@@ -128,7 +176,6 @@ struct MarkdownPreviewView: View {
 
             if trimmed.isEmpty { i += 1; continue }
 
-            // Fenced code block
             if trimmed.hasPrefix("```") {
                 let lang = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespaces)
                 var code: [String] = []
@@ -143,7 +190,6 @@ struct MarkdownPreviewView: View {
                 continue
             }
 
-            // Heading: requires `# ` (hash + space + content)
             if trimmed.range(of: #"^#{1,6}\s+.+"#, options: .regularExpression) != nil {
                 let level = trimmed.prefix(while: { $0 == "#" }).count
                 let text = String(trimmed.dropFirst(level)).trimmingCharacters(in: .whitespaces)
@@ -151,13 +197,11 @@ struct MarkdownPreviewView: View {
                 i += 1; continue
             }
 
-            // Horizontal rule
             if trimmed.range(of: #"^(-{3,}|\*{3,}|_{3,})$"#, options: .regularExpression) != nil {
                 blocks.append(.horizontalRule)
                 i += 1; continue
             }
 
-            // Blockquote
             if trimmed.hasPrefix("> ") || trimmed == ">" {
                 var quoteLines: [String] = []
                 while i < lines.count {
@@ -173,7 +217,6 @@ struct MarkdownPreviewView: View {
                 continue
             }
 
-            // Unordered list
             if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") {
                 var items: [String] = []
                 while i < lines.count {
@@ -191,7 +234,6 @@ struct MarkdownPreviewView: View {
                 continue
             }
 
-            // Ordered list
             if trimmed.range(of: #"^\d+\.\s+"#, options: .regularExpression) != nil {
                 var items: [String] = []
                 while i < lines.count {
@@ -207,7 +249,6 @@ struct MarkdownPreviewView: View {
                 continue
             }
 
-            // Paragraph (fallback) — uses exact same checks as block handlers above
             var paraLines: [String] = []
             while i < lines.count {
                 let lt = lines[i].trimmingCharacters(in: .whitespaces)
@@ -225,14 +266,12 @@ struct MarkdownPreviewView: View {
                 blocks.append(.paragraph(text: paraLines.joined(separator: "\n")))
             }
 
-            // Safety net: if nothing advanced i, force skip this line as plain text
             if i == startI {
                 blocks.append(.paragraph(text: lines[i]))
                 i += 1
             }
         }
 
-        print("[Preview] parseBlocks done, \(blocks.count) blocks")
         return blocks
     }
 }

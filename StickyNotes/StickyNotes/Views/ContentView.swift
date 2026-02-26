@@ -12,71 +12,15 @@ struct ContentView: View {
     }
 
     var body: some View {
-        let _ = print("[ContentView] body evaluated, isPreviewMode=\(isPreviewMode)")
         @Bindable var viewModel = viewModel
 
         NavigationSplitView {
-            List(viewModel.filteredNotes, selection: $viewModel.selectedNoteID) { note in
-                NoteRowView(note: note)
-                    .tag(note.id)
-                    .contextMenu {
-                        Button("删除", role: .destructive) {
-                            self.viewModel.deleteNote(note.id)
-                        }
-                    }
-            }
-            .onDeleteCommand {
-                self.viewModel.deleteSelectedNote()
-            }
-            .searchable(text: $viewModel.searchText, prompt: "搜索便签")
-            .navigationSplitViewColumnWidth(min: 200, ideal: 250)
-            .toolbar {
-                ToolbarItem {
-                    Button(action: { self.viewModel.createNote() }) {
-                        Label("新建便签", systemImage: "square.and.pencil")
-                    }
-                    .keyboardShortcut("n", modifiers: .command)
-                }
-            }
+            sidebarContent(viewModel: viewModel)
         } detail: {
-            if let note = selectedNote {
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        Text("创建: \(note.createdAt.formatted(date: .abbreviated, time: .shortened))")
-                        Spacer()
-                        Text("更新: \(note.updatedAt.formatted(date: .abbreviated, time: .shortened))")
-
-                        Divider().frame(height: 12)
-
-                        Button(action: {
-                            print("[ContentView] toggle pressed, will set isPreviewMode=\(!isPreviewMode)")
-                            isPreviewMode.toggle()
-                        }) {
-                            Image(systemName: isPreviewMode ? "pencil" : "eye")
-                        }
-                        .buttonStyle(.borderless)
-                        .keyboardShortcut("p", modifiers: [.command, .shift])
-                        .help(isPreviewMode ? "切换到编辑模式 (⇧⌘P)" : "切换到预览模式 (⇧⌘P)")
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-
-                    Divider()
-
-                    if isPreviewMode {
-                        MarkdownPreviewView(content: editorContent)
-                    } else {
-                        RawTextEditor(text: $editorContent)
-                    }
-                }
-            } else {
-                EmptyStateView()
-            }
+            detailContent
         }
-        .navigationTitle("便签")
-        .frame(minWidth: 600, minHeight: 400)
+        .navigationTitle("")
+        .frame(minWidth: 700, minHeight: 450)
         .onAppear {
             if let id = self.viewModel.selectedNoteID {
                 editorContent = self.viewModel.notes.first { $0.id == id }?.content ?? ""
@@ -94,9 +38,118 @@ struct ContentView: View {
             }
         }
     }
+
+    // MARK: - Sidebar
+
+    @ViewBuilder
+    private func sidebarContent(viewModel: NotesViewModel) -> some View {
+        @Bindable var viewModel = viewModel
+        List(viewModel.filteredNotes, selection: $viewModel.selectedNoteID) { note in
+            NoteRowView(note: note, isSelected: note.id == self.viewModel.selectedNoteID)
+                .tag(note.id)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8))
+                .contextMenu {
+                    Button(role: .destructive) {
+                        self.viewModel.deleteNote(note.id)
+                    } label: {
+                        Label("删除", systemImage: "trash")
+                    }
+                }
+        }
+        .listStyle(.sidebar)
+        .onDeleteCommand {
+            self.viewModel.deleteSelectedNote()
+        }
+        .searchable(text: $viewModel.searchText, prompt: "搜索便签...")
+        .navigationSplitViewColumnWidth(min: 220, ideal: 260)
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Button(action: { self.viewModel.createNote() }) {
+                    Label("新建便签", systemImage: "square.and.pencil")
+                }
+                .keyboardShortcut("n", modifiers: .command)
+                .help("新建便签 (⌘N)")
+            }
+        }
+    }
+
+    // MARK: - Detail
+
+    @ViewBuilder
+    private var detailContent: some View {
+        if let note = selectedNote {
+            VStack(spacing: 0) {
+                detailHeader(note: note)
+                editorArea
+            }
+            .background(.ultraThinMaterial)
+        } else {
+            EmptyStateView()
+                .background(.ultraThinMaterial)
+        }
+    }
+
+    @ViewBuilder
+    private func detailHeader(note: Note) -> some View {
+        HStack(spacing: 12) {
+            Label(
+                note.createdAt.formatted(date: .abbreviated, time: .shortened),
+                systemImage: "calendar"
+            )
+
+            Spacer()
+
+            Label(
+                note.updatedAt.formatted(date: .abbreviated, time: .shortened),
+                systemImage: "clock"
+            )
+
+            Divider()
+                .frame(height: 14)
+                .opacity(0.5)
+
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isPreviewMode.toggle()
+                }
+            } label: {
+                Image(systemName: isPreviewMode ? "pencil.line" : "eye")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(isPreviewMode ? .accentColor : .secondary)
+                    .frame(width: 26, height: 26)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(isPreviewMode ? Color.accentColor.opacity(0.12) : .clear)
+                    )
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut("p", modifiers: [.command, .shift])
+            .help(isPreviewMode ? "切换到编辑模式 (⇧⌘P)" : "切换到预览模式 (⇧⌘P)")
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.bar)
+    }
+
+    @ViewBuilder
+    private var editorArea: some View {
+        Divider().opacity(0.5)
+
+        if isPreviewMode {
+            MarkdownPreviewView(content: editorContent)
+                .transition(.opacity)
+        } else {
+            RawTextEditor(text: $editorContent)
+                .transition(.opacity)
+        }
+    }
 }
 
-// MARK: - NSTextView wrapper with smart substitutions disabled
+// MARK: - NSTextView Wrapper
 
 private struct RawTextEditor: NSViewRepresentable {
     @Binding var text: String
@@ -106,6 +159,9 @@ private struct RawTextEditor: NSViewRepresentable {
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSTextView.scrollableTextView()
         scrollView.drawsBackground = false
+        scrollView.scrollerStyle = .overlay
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
 
         guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
         textView.isAutomaticDashSubstitutionEnabled = false
@@ -113,10 +169,14 @@ private struct RawTextEditor: NSViewRepresentable {
         textView.isAutomaticTextReplacementEnabled = false
         textView.isRichText = false
         textView.allowsUndo = true
-        textView.font = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
-        textView.textContainerInset = NSSize(width: 8, height: 8)
+        textView.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+        textView.textContainerInset = NSSize(width: 12, height: 14)
         textView.backgroundColor = .clear
         textView.drawsBackground = false
+        textView.insertionPointColor = .controlAccentColor
+        textView.selectedTextAttributes = [
+            .backgroundColor: NSColor.controlAccentColor.withAlphaComponent(0.2)
+        ]
         textView.delegate = context.coordinator
         textView.string = text
         return scrollView

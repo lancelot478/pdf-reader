@@ -6,7 +6,9 @@ struct StickyNotesApp: App {
         WindowGroup {
             ContentView()
         }
-        .defaultSize(width: 700, height: 500)
+        .defaultSize(width: 800, height: 560)
+        .windowStyle(.titleBar)
+        .windowToolbarStyle(.unified(showsTitle: false))
         .commands {
             CommandGroup(replacing: .newItem) { }
         }
