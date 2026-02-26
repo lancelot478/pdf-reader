@@ -15,6 +15,8 @@
 		B10000000000000000000006 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* EmptyStateView.swift */; };
 		B10000000000000000000007 /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000007 /* PersistenceService.swift */; };
 		B10000000000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000008 /* Assets.xcassets */; };
+		B10000000000000000000010 /* MarkdownRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000010 /* MarkdownRenderer.swift */; };
+		B10000000000000000000011 /* MarkdownPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* MarkdownPreviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +30,8 @@
 		A10000000000000000000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10000000000000000000009 /* StickyNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StickyNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4F91A732F4D754400AE8D25 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A10000000000000000000010 /* MarkdownRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownRenderer.swift; sourceTree = "<group>"; };
+		A10000000000000000000011 /* MarkdownPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownPreviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,6 +89,7 @@
 				A10000000000000000000004 /* ContentView.swift */,
 				A10000000000000000000005 /* NoteRowView.swift */,
 				A10000000000000000000006 /* EmptyStateView.swift */,
+				A10000000000000000000011 /* MarkdownPreviewView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -93,6 +98,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000007 /* PersistenceService.swift */,
+				A10000000000000000000010 /* MarkdownRenderer.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -181,6 +187,8 @@
 				B10000000000000000000005 /* NoteRowView.swift in Sources */,
 				B10000000000000000000006 /* EmptyStateView.swift in Sources */,
 				B10000000000000000000007 /* PersistenceService.swift in Sources */,
+				B10000000000000000000010 /* MarkdownRenderer.swift in Sources */,
+				B10000000000000000000011 /* MarkdownPreviewView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
